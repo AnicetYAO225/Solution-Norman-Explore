@@ -4,8 +4,6 @@ Application web cartographique dédiée à la découverte et à la valorisation 
 normand (mobilier et architectural), avec des parcours adaptés aux mobilités douces
 (marche, vélo, transport en commun) et une vue 3D immersive de la région.
 
-**Démo en ligne :** https://anicetyao225.github.io/DocV/
-
 ---
 
 ## Sommaire
@@ -18,7 +16,6 @@ normand (mobilier et architectural), avec des parcours adaptés aux mobilités d
 - [Configuration (clés API)](#configuration-clés-api)
 - [Choix de performance](#choix-de-performance)
 - [Feuille de route](#feuille-de-route)
-- [Équipe](#équipe)
 - [Licence](#licence)
 
 ---
@@ -124,11 +121,6 @@ version précédente :
       un service de type Google Sheets / Airtable).
 - [ ] Ajouter une pagination ou un chargement progressif sur `filtre.html` pour de très gros volumes.
 - [ ] Explorer un mode hors-ligne (Service Worker) pour les zones à faible connectivité.
-
-## Équipe
-
-Projet réalisé par le **Géo Tech Groupe**, étudiants en Master 2 Géomatique — Université de
-Rouen Normandie.
 
 ## Licence
 
