@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norman'Explore - Patrimoine et mobilité douce en Normandie</title>
+    <meta name="description" content="Découvrez le patrimoine mobilier et architectural de Normandie et planifiez vos parcours à pied, à vélo ou en transport en commun.">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .hero {
+            display: flex;
+            flex: 1;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .gallery {
+            flex: 1.5;
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--ne-radius);
+            min-height: 320px;
+            box-shadow: var(--ne-shadow);
+        }
+
+        .gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1.2s ease;
+        }
+
+        .gallery img.active { opacity: 1; }
+
+        .info-text {
+            flex: 1;
+            padding: 1.4rem;
+            border-radius: var(--ne-radius);
+            background: #fff;
+            box-shadow: var(--ne-shadow);
+        }
+
+        .info-text h1 {
+            color: var(--ne-green-dark);
+            margin-bottom: 0.8rem;
+            font-size: 1.6rem;
+        }
+
+        .info-text p { margin-bottom: 1rem; color: var(--ne-muted); }
+
+        .info-text ul { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+        .info-text li { margin-bottom: 0.4rem; color: var(--ne-text); }
+
+        .cta-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.2rem; }
+
+        @media (max-width: 780px) {
+            .hero { flex-direction: column; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="ne-header">
+        <div class="logo-container">
+            <img src="https://www.flagsonline.fr/uploads/2019-11-27/1200-0/Region_Normandie_drapeau.jpg"
+                alt="Drapeau de la région Normandie" loading="lazy">
+            <div class="app-name">Norman'Explore</div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="active">Accueil</a></li>
+                <li><a href="carte.html">Carte</a></li>
+                <li><a href="parcours.html">Aperçu touristique</a></li>
+                <li><a href="mobilite.html">Mobilité verte</a></li>
+                <li><a href="contribution.html">Contribution</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="gallery" id="gallery">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Mont-Saint-Michel-At-Night.jpg"
+                    alt="Baie du Mont Saint-Michel de nuit" class="active">
+                <img src="https://www.normandie-tourisme.fr/app/uploads/2021/11/Le-Havre-Port-de-Plaisance-Sabina-Lorkin-Anibas-Photography-1024x683.jpg"
+                    alt="Port de plaisance du Havre" loading="lazy">
+                <img src="https://www.normandie-tourisme.fr/app/uploads/2020/03/carnaval-granville-rues-the-explorers-valentin-pacaut-1024x683.jpg"
+                    alt="Carnaval de Granville" loading="lazy">
+                <img src="https://www.normandie-tourisme.fr/app/uploads/2022/11/GR22-foret-d-ecouves-amelie-blondiaux-hellolaroux.jpg"
+                    alt="Forêt d'Écouves" loading="lazy">
+                <img src="https://www.normandie-tourisme.fr/app/uploads/iris-images/1249754/bayeux-adobestock-kirk-fisher-800x900-f50_50.jpg"
+                    alt="Bayeux" loading="lazy">
+            </div>
+
+            <div class="info-text">
+                <h1>Norman'Explore</h1>
+                <p>
+                    Norman'Explore facilite la découverte du patrimoine normand (mobilier et architectural)
+                    à travers des itinéraires adaptés à différents modes de déplacement : mobilités douces
+                    (à pied, à vélo) et véhicule.
+                </p>
+                <p>
+                    L'application permet aussi à chacun de contribuer à l'enrichissement de la base de
+                    données open data de la région, avec une vue d'ensemble de l'état de conservation
+                    de ces patrimoines.
+                </p>
+                <ul>
+                    <li>Accessibilité des patrimoines</li>
+                    <li>Valorisation des ressources culturelles</li>
+                    <li>Tourisme éco-responsable via des parcours à mobilité douce</li>
+                    <li>Enrichissement collaboratif et actualisation en temps réel</li>
+                </ul>
+                <div class="cta-row">
+                    <a href="carte.html" class="ne-btn">Explorer la carte</a>
+                    <a href="contribution.html" class="ne-btn ghost">Contribuer</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="ne-footer">
+        <p>&copy; Crédit Normandie Patrimoine | Géo Tech Groupe 2024</p>
+        <img src="assets/img/Logo_GeoTech.png" alt="Logo Géo Tech Groupe" loading="lazy">
+    </footer>
+
+    <script>
+        // Diaporama de la galerie d'accueil
+        document.addEventListener('DOMContentLoaded', () => {
+            const images = document.querySelectorAll('.gallery img');
+            let i = 0;
+            setInterval(() => {
+                images[i].classList.remove('active');
+                i = (i + 1) % images.length;
+                images[i].classList.add('active');
+            }, 4000);
+        });
+    </script>
+</body>
+
+</html>

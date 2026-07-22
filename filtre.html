@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Filtrez par préférences - Norman'Explore</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        body { background: var(--ne-bg); }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--ne-green-dark);
+        }
+
+        #filter-container {
+            text-align: center;
+            background: var(--ne-green);
+            border-radius: 20px;
+            width: min(90%, 700px);
+            margin: 0 auto 16px;
+            padding: 12px;
+            color: #fff;
+        }
+
+        #filter-container label { margin-right: 4px; }
+        #filter-container select { margin: 4px 8px; border-radius: 8px; border: none; padding: 6px 8px; }
+        #filter-container button {
+            margin-left: 8px;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 16px;
+            background: #fff;
+            color: var(--ne-green-dark);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #filter-container button:hover { background: #eaeaea; }
+
+        #main-container {
+            display: grid;
+            grid-template-columns: 1.1fr 1.5fr;
+            grid-template-rows: 1.7fr 1fr;
+            gap: 12px;
+            height: calc(100vh - 130px);
+            padding: 0 12px 12px;
+        }
+
+        #results-container {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            text-align: center;
+            padding: 10px;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: var(--ne-radius);
+            box-shadow: var(--ne-shadow);
+        }
+
+        #image-display {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+            position: relative;
+            background: #fff;
+            border-radius: var(--ne-radius);
+            box-shadow: var(--ne-shadow);
+            overflow: hidden;
+            min-height: 220px;
+        }
+
+        #image-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transform: scale(0.97);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        #image-display .empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #image-display .image-name {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            padding: 14px 18px;
+            font-size: 17px;
+            font-weight: 700;
+            text-align: left;
+            color: #fff;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+        }
+
+        #chart-container {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            border-radius: var(--ne-radius);
+            box-shadow: var(--ne-shadow);
+            overflow: hidden;
+        }
+
+        #chart-container h2 { font-size: 1rem; margin-bottom: 8px; color: var(--ne-green-dark); }
+
+        #chart-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #chart { max-width: 100%; height: auto; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        table, th, td { border: 1px solid #e2e6e4; }
+        th { background: var(--ne-green); color: #fff; text-align: left; }
+        th, td { padding: 8px; text-align: left; }
+
+        .show-buttons { margin-top: 10px; text-align: center; }
+        .empty-state { color: var(--ne-muted); padding: 20px; font-size: 14px; }
+    </style>
+</head>
+
+<body>
+    <h1>Filtrez par préférences</h1>
+    <div id="filter-container">
+        <label for="type">Type :</label>
+        <select id="type">
+            <option value="">Tous</option>
+            <option value="Mobilier">Mobilier</option>
+            <option value="Architecture">Architecture</option>
+        </select>
+
+        <label for="epoque">Époque :</label>
+        <select id="epoque">
+            <option value="">Toutes</option>
+            <option value="Medieval">Médiéval</option>
+            <option value="Moderne">Moderne</option>
+            <option value="Contemporain">Contemporain</option>
+        </select>
+
+        <label for="departement">Département :</label>
+        <select id="departement">
+            <option value="">Tous</option>
+            <option value="Calvados">Calvados</option>
+            <option value="Manche">Manche</option>
+            <option value="Seine-Maritime">Seine-Maritime</option>
+            <option value="Orne">Orne</option>
+            <option value="Eure">Eure</option>
+        </select>
+
+        <button id="filterBtn">Filtrer</button>
+    </div>
+
+    <div id="main-container">
+        <div id="image-display"><p class="empty-state">Lance une recherche pour voir les résultats.</p></div>
+        <div id="chart-container">
+            <h2>Statistiques</h2>
+            <div id="chart-wrapper"><canvas id="chart" width="230" height="230"></canvas></div>
+        </div>
+        <div id="results-container">
+            <h2>Résultats</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr><th>Description</th><th>Commune</th><th>Époque</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="show-buttons">
+                <button id="showAllBtn" class="ne-btn">Afficher tout</button>
+                <button id="showFirst10Btn" class="ne-btn ghost">Réduire</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script>
+        let combinedData = [];
+        let filteredData = [];
+        let chartInstance;
+        let currentImageIndex = 0;
+        let imageTimer;
+
+        // Une seule requête par type (fichiers consolidés et auto-hébergés)
+        // au lieu de 10 fichiers séparés par département.
+        Promise.all([
+            fetch(CONFIG.geo.mobilier).then(r => r.json()),
+            fetch(CONFIG.geo.architecture).then(r => r.json())
+        ]).then(([mobilier, architecture]) => {
+            combinedData = [...mobilier.features, ...architecture.features];
+        }).catch(err => console.error('Erreur de chargement des données patrimoine :', err));
+
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            const type = document.getElementById('type').value;
+            const epoque = document.getElementById('epoque').value;
+            const departement = document.getElementById('departement').value;
+
+            filteredData = combinedData.filter(feature => {
+                const props = feature.properties;
+                return (!type || props.Type === type) &&
+                    (!epoque || props.Epoque === epoque) &&
+                    (!departement || props.Departement === departement);
+            });
+
+            updateImageDisplay(filteredData);
+            updateTable(filteredData.slice(0, 10));
+            updateChart(type, epoque, departement, filteredData);
+        });
+
+        function updateImageDisplay(data) {
+            const imageDisplay = document.getElementById('image-display');
+            if (imageTimer) clearInterval(imageTimer);
+
+            if (!data.length) {
+                imageDisplay.innerHTML = '<p class="empty-state">Aucun résultat pour ces filtres.</p>';
+                return;
+            }
+
+            currentImageIndex = 0;
+            showImage(currentImageIndex);
+            imageTimer = setInterval(() => {
+                currentImageIndex = (currentImageIndex + 1) % data.length;
+                showImage(currentImageIndex);
+            }, 3500);
+        }
+
+        function showImage(index) {
+            const imageDisplay = document.getElementById('image-display');
+            const feature = filteredData[index];
+            if (!feature || !/^https?:\/\//.test(feature.properties.image || '')) return;
+
+            imageDisplay.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = feature.properties.image;
+            img.loading = 'lazy';
+            img.alt = feature.properties.TICO || 'Image du patrimoine';
+
+            const name = document.createElement('div');
+            name.className = 'image-name';
+            name.textContent = feature.properties.TICO || 'Sans titre';
+
+            imageDisplay.appendChild(img);
+            imageDisplay.appendChild(name);
+
+            requestAnimationFrame(() => {
+                img.style.opacity = 1;
+                img.style.transform = 'scale(1)';
+            });
+        }
+
+        function updateTable(data) {
+            const tbody = document.getElementById('resultsTable').querySelector('tbody');
+            tbody.innerHTML = '';
+            data.forEach(feature => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${feature.properties.TICO || 'N/A'}</td>
+                    <td>${feature.properties.COM || 'N/A'}</td>
+                    <td>${feature.properties.Epoque || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateChart(type, epoque, departement, data) {
+            let labels = [];
+            let counts = [];
+
+            if (type && !epoque) {
+                const epochs = ['Medieval', 'Moderne', 'Contemporain'];
+                labels = epochs;
+                counts = epochs.map(ep => data.filter(d => d.properties.Epoque === ep).length);
+            } else if (type && epoque && !departement) {
+                labels = Array.from(new Set(data.map(d => d.properties.Departement)));
+                counts = labels.map(dep => data.filter(d => d.properties.Departement === dep).length);
+            } else if (type && epoque && departement) {
+                const communeCounts = {};
+                data.forEach(d => {
+                    const commune = d.properties.COM;
+                    if (commune) communeCounts[commune] = (communeCounts[commune] || 0) + 1;
+                });
+                const sorted = Object.entries(communeCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                labels = sorted.map(e => e[0]);
+                counts = sorted.map(e => e[1]);
+            } else {
+                labels = ['Mobilier', 'Architecture'];
+                counts = [
+                    data.filter(d => d.properties.Type === 'Mobilier').length,
+                    data.filter(d => d.properties.Type === 'Architecture').length
+                ];
+            }
+
+            if (chartInstance) chartInstance.destroy();
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: ['#e8590c', '#1864ab', '#2e8b57', '#ffce56', '#9c27b0'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+                }
+            });
+        }
+
+        document.getElementById('showAllBtn').addEventListener('click', () => updateTable(filteredData));
+        document.getElementById('showFirst10Btn').addEventListener('click', () => updateTable(filteredData.slice(0, 10)));
+    </script>
+</body>
+
+</html>

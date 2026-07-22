@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Carte du patrimoine - Norman'Explore</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
+    <style>
+        html, body { height: 100%; }
+        body { display: block; }
+        #map {
+            position: absolute;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .search-container {
+            position: absolute;
+            top: 64px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            max-width: calc(100vw - 20px);
+            gap: 6px;
+            padding: 6px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            box-shadow: var(--ne-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .search-container input {
+            width: 130px;
+            flex-shrink: 0;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e6e4;
+            font-size: 13px;
+            font-family: var(--ne-font);
+            background: #fafbfa;
+        }
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--ne-blue);
+            background: #fff;
+        }
+
+        .search-container .ne-btn {
+            padding: 7px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            background: white;
+            max-height: 140px;
+            overflow-y: auto;
+            width: 200px;
+            z-index: 1001;
+            list-style: none;
+            margin-top: 36px;
+            border-radius: 8px;
+            box-shadow: var(--ne-shadow);
+            font-size: 13px;
+        }
+
+        .autocomplete-suggestions li { padding: 7px 10px; cursor: pointer; }
+        .autocomplete-suggestions li:hover { background: var(--ne-blue); color: #fff; }
+
+        .sidebar {
+            position: fixed;
+            left: -320px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            max-height: 60vh;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--ne-shadow);
+            border-radius: 20px;
+            overflow-y: auto;
+            text-align: center;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            padding: 14px;
+        }
+
+        .sidebar.active { left: 10px; }
+
+        #closeSidebar {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            position: absolute;
+            top: 8px;
+            right: 12px;
+        }
+
+        #patrimoineList { list-style: none; margin-top: 20px; text-align: left; }
+        #patrimoineList li {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+            border-radius: 14px;
+            font-size: 13px;
+        }
+
+        #isochroneControls {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        #isochroneControls button {
+            padding: 8px 10px;
+            font-size: 13px;
+            border: none;
+            border-radius: 10px;
+            background: var(--ne-blue);
+            color: #fff;
+            cursor: pointer;
+        }
+        #isochroneControls button:hover { background: #005f8f; }
+
+        .time-control {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            box-shadow: var(--ne-shadow);
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+
+        .map3d-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: none;
+        }
+        .map3d-overlay.active { display: block; }
+        #map3d { width: 100%; height: 100%; }
+
+        .map3d-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 5001;
+        }
+
+        .map3d-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            z-index: 5001;
+            white-space: nowrap;
+        }
+
+        #loadingBadge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 999;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="ne-header" style="position:absolute; top:0; left:0; right:0; height:56px;">
+        <div class="logo-container">
+            <div class="app-name">Norman'Explore</div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="carte.html" class="active">Carte</a></li>
+                <li><a href="parcours.html">Aperçu touristique</a></li>
+                <li><a href="mobilite.html">Mobilité verte</a></li>
+                <li><a href="contribution.html">Contribution</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div id="map"></div>
+
+    <div class="search-container">
+        <input type="text" id="startAddress" placeholder="Départ" autocomplete="off" />
+        <ul id="startSuggestions" class="autocomplete-suggestions"></ul>
+        <input type="text" id="endAddress" placeholder="Arrivée" autocomplete="off" />
+        <ul id="endSuggestions" class="autocomplete-suggestions"></ul>
+        <button id="traceRoute" class="ne-btn secondary">Tracer l'itinéraire</button>
+        <button id="resetButton" class="ne-btn ghost">Réinitialiser</button>
+        <button id="filtreButton" class="ne-btn">Filtrer</button>
+        <button id="toggle3D" class="ne-btn secondary">Vue 3D</button>
+    </div>
+
+    <div id="map3dOverlay" class="map3d-overlay">
+        <div id="map3d"></div>
+        <button id="close3D" class="ne-btn map3d-close">Fermer ✕</button>
+        <div class="map3d-hint">Glisser-droit (ou Ctrl+glisser) pour incliner · glisser pour tourner</div>
+    </div>
+
+    <div id="sidebar" class="sidebar">
+        <button id="closeSidebar">×</button>
+        <h3>Patrimoines à proximité</h3>
+        <ul id="patrimoineList"></ul>
+    </div>
+
+    <div id="isochroneControls">
+        <button data-duration="900">15 min 🕒</button>
+        <button data-duration="1800">30 min 🕝</button>
+        <button data-duration="2700">45 min 🕗</button>
+        <button data-duration="3600">1 h 🕕</button>
+    </div>
+
+    <div class="time-control">
+        Temporalité
+        <input id="date" type="range" min="1" max="365" step="1">
+        <input id="time" type="range" min="0" max="23" step="1">
+    </div>
+
+    <div id="loadingBadge">Chargement…</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/map-common.js"></script>
+    <script>
+        function openFilterPage() { window.open('filtre.html', '_blank'); }
+        document.getElementById('filtreButton').addEventListener('click', openFilterPage);
+
+        const map = neCreateMap('map');
+        neAddDepartmentContours(map);
+        neEnableBuildings3D(map);       // ne charge le 3D qu'à partir du zoom défini dans config.js
+        neAddLocateControl(map, (loc) => { userLocation = loc; });
+
+        // ---- Groupes de clusters Mobilier / Architecture (chargés à la demande) ----
+        const clusterGroups = { Mobilier: null, Architecture: null };
+        const visible = { Mobilier: false, Architecture: false };
+
+        async function toggleLayer(type, button) {
+            const badge = document.getElementById('loadingBadge');
+            if (visible[type]) {
+                map.removeLayer(clusterGroups[type]);
+                visible[type] = false;
+                button.classList.remove('active');
+                return;
+            }
+            try {
+                if (!clusterGroups[type]) {
+                    badge.style.display = 'block';
+                    badge.textContent = `Chargement ${type}…`;
+                    clusterGroups[type] = await neLoadPatrimoineLayer(type);
+                }
+                map.addLayer(clusterGroups[type]);
+                visible[type] = true;
+                button.classList.add('active');
+            } catch (err) {
+                alert(`Impossible de charger la couche ${type}.`);
+                console.error(err);
+            } finally {
+                badge.style.display = 'none';
+            }
+        }
+
+        var layerToggleContainer = L.control({ position: 'bottomright' });
+        layerToggleContainer.onAdd = function () {
+            const container = L.DomUtil.create('div', 'layer-toggle-container');
+            L.DomEvent.disableClickPropagation(container);
+
+            const architectureBtn = L.DomUtil.create('button', 'layer-toggle', container);
+            architectureBtn.innerHTML = 'Architecture';
+            architectureBtn.addEventListener('click', () => toggleLayer('Architecture', architectureBtn));
+
+            const mobilierBtn = L.DomUtil.create('button', 'layer-toggle', container);
+            mobilierBtn.innerHTML = 'Mobilier';
+            mobilierBtn.addEventListener('click', () => toggleLayer('Mobilier', mobilierBtn));
+
+            return container;
+        };
+        layerToggleContainer.addTo(map);
+
+        // ---- Sidebar patrimoines (résultat des isochrones) ----
+        function toggleSidebar(show) {
+            document.getElementById('sidebar').classList.toggle('active', show);
+        }
+        document.getElementById('closeSidebar').addEventListener('click', () => toggleSidebar(false));
+
+        function updatePatrimoineList(features) {
+            const listElement = document.getElementById('patrimoineList');
+            listElement.innerHTML = '';
+            features.forEach(feature => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${feature.properties.COM || 'Inconnu'}</strong><p>${feature.properties.TICO || 'Pas de description'}</p>`;
+                listElement.appendChild(li);
+            });
+            toggleSidebar(true);
+        }
+
+        // ---- Isochrones (OpenRouteService) ----
+        let userLocation = null;
+        let isochroneLayers = {};
+
+        function generateIsochrones(duration) {
+            if (!userLocation) { alert('Clique sur "Me localiser" d\'abord.'); return; }
+            const requestBody = { locations: [userLocation], range: [duration], range_type: 'time' };
+
+            fetch(CONFIG.openRouteService.isochroneUrl, {
+                method: 'POST',
+                headers: { 'Authorization': CONFIG.openRouteService.key, 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            })
+                .then(res => { if (!res.ok) throw new Error(`Erreur API isochrones : ${res.status}`); return res.json(); })
+                .then(data => {
+                    const colors = { 900: '#00ff00', 1800: '#ffff00', 2700: '#ffa500', 3600: '#ff0000' };
+                    const color = colors[duration] || '#0000ff';
+                    const layerArray = data.features.map(f =>
+                        L.geoJSON(f, { style: { color, weight: 2, fillOpacity: 0.15 } }).addTo(map)
+                    );
+                    isochroneLayers[duration] = layerArray;
+
+                    const patrimoineFeatures = [];
+                    Object.values(clusterGroups).forEach(group => {
+                        if (!group) return;
+                        group.eachLayer(layer => {
+                            layer.getAllChildMarkers ? layer.getAllChildMarkers().forEach(m => {
+                                if (m.feature && layerArray.some(l => l.getBounds().contains(m.getLatLng()))) {
+                                    patrimoineFeatures.push(m.feature);
+                                }
+                            }) : null;
+                        });
+                    });
+                    updatePatrimoineList(patrimoineFeatures);
+                })
+                .catch(err => console.error('Erreur isochrones :', err));
+        }
+
+        function toggleIsochrones(duration) {
+            if (isochroneLayers[duration]) {
+                isochroneLayers[duration].forEach(l => map.removeLayer(l));
+                delete isochroneLayers[duration];
+                document.getElementById('patrimoineList').innerHTML = '';
+                toggleSidebar(false);
+            } else {
+                generateIsochrones(duration);
+            }
+        }
+
+        document.querySelectorAll('#isochroneControls button').forEach(btn => {
+            btn.addEventListener('click', () => toggleIsochrones(Number(btn.dataset.duration)));
+        });
+
+        // ---- Géocodage + itinéraire (GraphHopper) ----
+        let startMarker, endMarker, routeLayer;
+
+        async function geocode(address) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.length ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+        }
+
+        async function setupAutocomplete(inputId, suggestionsId, onSelect) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(suggestionsId);
+            let timer;
+            input.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(async () => {
+                    const q = input.value.trim();
+                    list.innerHTML = '';
+                    if (q.length < 3) return;
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=fr&limit=5`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    data.forEach(place => {
+                        const li = document.createElement('li');
+                        li.textContent = place.display_name;
+                        li.addEventListener('click', () => {
+                            input.value = place.display_name;
+                            list.innerHTML = '';
+                            onSelect([parseFloat(place.lat), parseFloat(place.lon)]);
+                        });
+                        list.appendChild(li);
+                    });
+                }, 350);
+            });
+        }
+
+        let startCoords = null, endCoords = null;
+        setupAutocomplete('startAddress', 'startSuggestions', (coords) => { startCoords = coords; });
+        setupAutocomplete('endAddress', 'endSuggestions', (coords) => { endCoords = coords; });
+
+        document.getElementById('traceRoute').addEventListener('click', async () => {
+            if (!startCoords) startCoords = await geocode(document.getElementById('startAddress').value);
+            if (!endCoords) endCoords = await geocode(document.getElementById('endAddress').value);
+            if (!startCoords || !endCoords) { alert('Adresse de départ ou d\'arrivée introuvable.'); return; }
+
+            if (routeLayer) map.removeLayer(routeLayer);
+            if (startMarker) map.removeLayer(startMarker);
+            if (endMarker) map.removeLayer(endMarker);
+
+            startMarker = L.marker(startCoords).addTo(map).bindPopup('Départ');
+            endMarker = L.marker(endCoords).addTo(map).bindPopup('Arrivée');
+
+            const pointsQuery = `${startCoords[0]},${startCoords[1]}&point=${endCoords[0]},${endCoords[1]}`;
+            const url = `${CONFIG.graphhopper.routeUrl}?point=${pointsQuery}&profile=car&locale=fr&key=${CONFIG.graphhopper.key}&points_encoded=false`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.paths && data.paths.length) {
+                    const coords = data.paths[0].points.coordinates.map(c => [c[1], c[0]]);
+                    routeLayer = L.polyline(coords, { color: '#0077b6', weight: 4 }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds());
+                } else {
+                    alert('Aucun itinéraire trouvé.');
+                }
+            } catch (err) {
+                console.error('Erreur itinéraire :', err);
+                alert("Erreur lors du calcul de l'itinéraire.");
+            }
+        });
+
+        // ---- Vue 3D (MapLibre GL + bâtiments extrudés, inclinable et pivotable) ----
+        let map3d = null;
+
+        function ensure3DBuildings() {
+            const layers = map3d.getStyle().layers || [];
+            const labelLayer = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field']);
+            if (!map3d.getLayer('ne-3d-buildings')) {
+                map3d.addLayer({
+                    id: 'ne-3d-buildings',
+                    source: 'openmaptiles',
+                    'source-layer': 'building',
+                    type: 'fill-extrusion',
+                    minzoom: 13,
+                    paint: {
+                        'fill-extrusion-color': '#cfd9d2',
+                        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 8],
+                        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                        'fill-extrusion-opacity': 0.9
+                    }
+                }, labelLayer ? labelLayer.id : undefined);
+            }
+        }
+
+        function ensure3DPatrimoine() {
+            ['Mobilier', 'Architecture'].forEach((type) => {
+                const sourceId = `ne-${type.toLowerCase()}`;
+                if (map3d.getSource(sourceId)) return;
+                const color = CONFIG.patrimoineColors[type];
+
+                map3d.addSource(sourceId, {
+                    type: 'geojson',
+                    data: type === 'Mobilier' ? CONFIG.geo.mobilier : CONFIG.geo.architecture,
+                    cluster: true,
+                    clusterRadius: 45,
+                    clusterMaxZoom: 16
+                });
+
+                map3d.addLayer({
+                    id: `${sourceId}-clusters`,
+                    type: 'circle',
+                    source: sourceId,
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': color,
+                        'circle-opacity': 0.85,
+                        'circle-radius': ['step', ['get', 'point_count'], 14, 20, 18, 100, 24],
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
+
+                map3d.addLayer({
+                    id: `${sourceId}-cluster-count`,
+                    type: 'symbol',
+                    source: sourceId,
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': ['get', 'point_count_abbreviated'],
+                        'text-size': 12
+                    },
+                    paint: { 'text-color': '#fff' }
+                });
+
+                map3d.addLayer({
+                    id: `${sourceId}-points`,
+                    type: 'circle',
+                    source: sourceId,
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': color,
+                        'circle-radius': 6,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
+
+                map3d.on('click', `${sourceId}-clusters`, (e) => {
+                    const features = map3d.queryRenderedFeatures(e.point, { layers: [`${sourceId}-clusters`] });
+                    const clusterId = features[0].properties.cluster_id;
+                    map3d.getSource(sourceId).getClusterExpansionZoom(clusterId, (err, zoom) => {
+                        if (err) return;
+                        map3d.easeTo({ center: features[0].geometry.coordinates, zoom });
+                    });
+                });
+
+                map3d.on('click', `${sourceId}-points`, (e) => {
+                    const feature = e.features[0];
+                    new maplibregl.Popup({ maxWidth: '240px' })
+                        .setLngLat(feature.geometry.coordinates.slice())
+                        .setHTML(nePopupContent(feature))
+                        .addTo(map3d);
+                });
+
+                map3d.on('mouseenter', `${sourceId}-points`, () => { map3d.getCanvas().style.cursor = 'pointer'; });
+                map3d.on('mouseleave', `${sourceId}-points`, () => { map3d.getCanvas().style.cursor = ''; });
+                map3d.on('mouseenter', `${sourceId}-clusters`, () => { map3d.getCanvas().style.cursor = 'pointer'; });
+                map3d.on('mouseleave', `${sourceId}-clusters`, () => { map3d.getCanvas().style.cursor = ''; });
+            });
+        }
+
+        function open3D() {
+            document.getElementById('map3dOverlay').classList.add('active');
+            const center = map.getCenter();
+            if (!map3d) {
+                map3d = new maplibregl.Map({
+                    container: 'map3d',
+                    style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${CONFIG.maptiler.key}`,
+                    center: [center.lng, center.lat],
+                    zoom: Math.max(map.getZoom(), 14),
+                    pitch: 60,
+                    bearing: -18,
+                    antialias: true
+                });
+                map3d.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-left');
+                map3d.on('load', () => {
+                    ensure3DBuildings();
+                    ensure3DPatrimoine();
+                });
+                map3d.on('error', (e) => console.error('Erreur MapLibre :', e?.error || e));
+            } else {
+                map3d.jumpTo({ center: [center.lng, center.lat], zoom: Math.max(map.getZoom(), 14) });
+            }
+            setTimeout(() => map3d && map3d.resize(), 200);
+        }
+
+        function close3D() {
+            document.getElementById('map3dOverlay').classList.remove('active');
+        }
+
+        document.getElementById('toggle3D').addEventListener('click', open3D);
+        document.getElementById('close3D').addEventListener('click', close3D);
+
+        document.getElementById('resetButton').addEventListener('click', () => {
+            if (routeLayer) map.removeLayer(routeLayer);
+            if (startMarker) map.removeLayer(startMarker);
+            if (endMarker) map.removeLayer(endMarker);
+            startCoords = endCoords = null;
+            document.getElementById('startAddress').value = '';
+            document.getElementById('endAddress').value = '';
+        });
+    </script>
+</body>
+
+</html>

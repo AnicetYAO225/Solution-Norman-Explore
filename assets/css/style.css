@@ -1,0 +1,252 @@
+/* =========================================================
+   Norman'Explore — feuille de style partagée
+   Palette : vert Normandie (#2e8b57), bleu mobilité (#0077b6),
+   fond neutre clair. Police système = zéro requête externe.
+   ========================================================= */
+
+:root {
+  --ne-green: #2e8b57;
+  --ne-green-dark: #1f6b42;
+  --ne-blue: #0077b6;
+  --ne-orange: #e8590c;
+  --ne-bg: #f4f6f5;
+  --ne-text: #22303c;
+  --ne-muted: #5c6b73;
+  --ne-white: #ffffff;
+  --ne-radius: 14px;
+  --ne-shadow: 0 4px 16px rgba(20, 40, 30, 0.12);
+  --ne-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--ne-font);
+  color: var(--ne-text);
+  background: var(--ne-bg);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ---------- Header / nav commun ---------- */
+.ne-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: var(--ne-green-dark);
+  color: var(--ne-white);
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+}
+
+.ne-header .logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ne-header .logo-container img {
+  width: 44px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.ne-header .app-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.ne-header nav ul {
+  display: flex;
+  list-style: none;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ne-header nav a {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.ne-header nav a:hover,
+.ne-header nav a.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* ---------- Footer commun ---------- */
+.ne-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.2rem;
+  background: var(--ne-white);
+  border-top: 1px solid #e2e6e4;
+  font-size: 0.85rem;
+  color: var(--ne-muted);
+}
+
+.ne-footer img { width: 44px; height: 38px; object-fit: contain; }
+
+/* ---------- Boutons communs ---------- */
+.ne-btn {
+  display: inline-block;
+  background: var(--ne-green);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.ne-btn:hover { background: var(--ne-green-dark); }
+.ne-btn:active { transform: translateY(1px); }
+
+.ne-btn.secondary { background: var(--ne-blue); }
+.ne-btn.secondary:hover { background: #005f8f; }
+
+.ne-btn.ghost {
+  background: transparent;
+  color: var(--ne-green-dark);
+  border: 1px solid var(--ne-green);
+}
+.ne-btn.ghost:hover { background: rgba(46, 139, 87, 0.08); }
+
+/* ---------- Cartes Leaflet : styles communs ---------- */
+.leaflet-popup-content {
+  border: 2px solid var(--ne-blue);
+  border-radius: 16px;
+  padding: 4px;
+  font-family: var(--ne-font);
+  font-size: 14px;
+  max-width: 260px;
+  color: var(--ne-text);
+  text-align: center;
+}
+
+.leaflet-popup-tip { background-color: var(--ne-blue); }
+
+.popup-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.popup-description { font-size: 13px; color: var(--ne-muted); margin-bottom: 6px; }
+.leaflet-popup-content img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+.leaflet-popup-content a {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--ne-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+.leaflet-popup-content a:hover { text-decoration: underline; }
+
+/* Marqueurs de patrimoine : miniature photo en cercle si dispo, sinon pastille colorée */
+.patrimoine-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.15s ease;
+}
+
+.patrimoine-marker.has-image {
+  border-width: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.patrimoine-marker:hover { transform: scale(1.12); z-index: 1000; }
+
+/* Clusters : dégradé sobre + halo, sans photos (garde les perfs) */
+.cluster-marker {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: var(--ne-font);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--cluster-color) 70%, white), var(--cluster-color));
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.cluster-marker:hover { transform: scale(1.08); }
+
+.layer-toggle-container {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  padding: 5px;
+  border-radius: 30px;
+  box-shadow: var(--ne-shadow);
+  margin: 10px;
+}
+
+.layer-toggle {
+  font-family: var(--ne-font);
+  font-size: 12.5px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--ne-muted);
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.layer-toggle.active { background: var(--ne-green); color: #fff; }
+.layer-toggle:hover:not(.active) { background: #eef2ef; color: var(--ne-text); }
+
+.locate-btn {
+  background: #fff;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.locate-btn:hover { background: #f0f0f0; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 780px) {
+  .ne-header { flex-direction: column; align-items: flex-start; }
+  .ne-header nav ul { gap: 0.15rem; }
+  .ne-footer { flex-direction: column; text-align: center; }
+}

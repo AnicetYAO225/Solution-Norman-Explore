@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contribution - Norman'Explore</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        main { padding: 1.5rem 1rem; }
+
+        .form-container {
+            background: #fff;
+            padding: 1.4rem;
+            border-radius: var(--ne-radius);
+            box-shadow: var(--ne-shadow);
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .form-container h2 { text-align: center; color: var(--ne-green-dark); margin-bottom: 1rem; }
+
+        label { font-weight: 600; margin-top: 10px; display: block; font-size: 0.9rem; }
+
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            font-family: var(--ne-font);
+        }
+
+        button[type="submit"] {
+            background: var(--ne-green);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover { background: var(--ne-green-dark); }
+
+        .geo-location-btn {
+            background: var(--ne-blue);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        .geo-location-btn:hover { background: #005f8f; }
+
+        .hint { font-size: 12px; color: var(--ne-muted); margin-top: -10px; margin-bottom: 12px; }
+    </style>
+</head>
+
+<body>
+    <header class="ne-header">
+        <div class="logo-container"><div class="app-name">Norman'Explore</div></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="carte.html">Carte</a></li>
+                <li><a href="parcours.html">Aperçu touristique</a></li>
+                <li><a href="mobilite.html">Mobilité verte</a></li>
+                <li><a href="contribution.html" class="active">Contribution</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2>Signaler un élément de patrimoine</h2>
+            <p class="hint">
+                Ce formulaire de démonstration n'est pas encore relié à une base de données : les
+                informations saisies restent dans ton navigateur. Contacte l'équipe si tu
+                veux qu'on branche un vrai stockage (formulaire GitHub, Google Sheets, base de données…).
+            </p>
+
+            <form id="patrimoineForm">
+                <label for="userName">Nom de l'utilisateur (optionnel)</label>
+                <input type="text" id="userName" name="userName" placeholder="Votre nom" />
+
+                <label for="patrimoineName">Nom du patrimoine</label>
+                <input type="text" id="patrimoineName" name="patrimoineName" placeholder="Nom du patrimoine" required />
+
+                <label for="dateField">Date d'envoi</label>
+                <input type="text" id="dateField" name="dateField" readonly />
+
+                <label for="patrimoinePhoto">Photo du patrimoine</label>
+                <input type="file" id="patrimoinePhoto" name="patrimoinePhoto" accept="image/*" required />
+
+                <label for="latitude">Latitude</label>
+                <input type="text" id="latitude" name="latitude" placeholder="Latitude" required />
+
+                <label for="longitude">Longitude</label>
+                <input type="text" id="longitude" name="longitude" placeholder="Longitude" required />
+
+                <button type="button" class="geo-location-btn" id="geoBtn">Obtenir ma localisation</button>
+
+                <label for="description">Descriptif (optionnel)</label>
+                <textarea id="description" name="description" placeholder="Ajoutez un descriptif du patrimoine" rows="4"></textarea>
+
+                <button type="submit">Envoyer</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="ne-footer">
+        <p>&copy; Crédit Normandie Patrimoine | Géo Tech Groupe 2024</p>
+    </footer>
+
+    <script>
+        document.getElementById('geoBtn').addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert("La géolocalisation n'est pas supportée par ce navigateur.");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                },
+                (error) => alert("Erreur lors de l'obtention de la localisation : " + error.message)
+            );
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dateField').value = new Date().toLocaleDateString('fr-FR');
+        });
+
+        document.getElementById('patrimoineForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            console.log('Formulaire soumis :', Object.fromEntries(formData.entries()));
+            alert('Merci ! Ta contribution a bien été enregistrée localement.');
+            event.target.reset();
+            document.getElementById('dateField').value = new Date().toLocaleDateString('fr-FR');
+        });
+    </script>
+</body>
+
+</html>

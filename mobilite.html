@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobilité verte - Norman'Explore</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <style>
+        .eco-section {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .eco-container {
+            width: min(100%, 320px);
+            height: 260px;
+            position: relative;
+            border: 3px solid var(--ne-green);
+            overflow: hidden;
+            border-radius: var(--ne-radius);
+            cursor: pointer;
+            box-shadow: var(--ne-shadow);
+        }
+
+        .eco-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .eco-text {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+        }
+
+        .info-container {
+            flex: 1;
+            min-width: 260px;
+            background: #fff;
+            border-radius: var(--ne-radius);
+            padding: 1rem;
+            box-shadow: var(--ne-shadow);
+        }
+
+        .info-container h2 { color: var(--ne-green-dark); margin-bottom: 8px; font-size: 1.3rem; }
+        .info-container p { color: var(--ne-muted); margin-bottom: 10px; }
+        .info-container select { padding: 6px; border-radius: 8px; margin-bottom: 10px; }
+
+        .controls {
+            padding: 10px;
+            background: #fff;
+            border-radius: 50px;
+            margin: 0 auto 10px;
+            width: min(90%, 600px);
+            text-align: center;
+            box-shadow: var(--ne-shadow);
+        }
+
+        .controls label, .controls select { margin: 5px; font-size: 14px; }
+
+        #map { width: 100%; height: 70vh; border-radius: var(--ne-radius); }
+        #mapWrapper { padding: 0 1rem 1rem; }
+    </style>
+</head>
+
+<body>
+    <header class="ne-header">
+        <div class="logo-container"><div class="app-name">Norman'Explore</div></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="carte.html">Carte</a></li>
+                <li><a href="parcours.html">Aperçu touristique</a></li>
+                <li><a href="mobilite.html" class="active">Mobilité verte</a></li>
+                <li><a href="contribution.html">Contribution</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="eco-section">
+        <div class="eco-container" id="ecoCard">
+            <img src="https://www.normandie-tourisme.fr/app/uploads/2023/03/GR2-seine-SMA-arnaud-beauvois.jpg"
+                alt="Sentier éco-responsable en bord de Seine" loading="lazy">
+            <div class="eco-text">Activité éco-responsable</div>
+        </div>
+        <div class="info-container">
+            <h2>Choisis une ville à explorer à pied ou à vélo</h2>
+            <label for="villeSelect">Ville :</label>
+            <select id="villeSelect">
+                <option value="">Choisir</option>
+                <option value="Rouen">Rouen</option>
+                <option value="Caen">Caen</option>
+                <option value="Alençon">Alençon</option>
+                <option value="Évreux">Évreux</option>
+                <option value="Saint-Lô">Saint-Lô</option>
+            </select>
+            <p id="ecoDescription">Sélectionne une ville puis clique sur « Voir sur la carte » pour afficher ses
+                sites incontournables et estimer la durée du trajet à vélo ou en transport en commun.</p>
+            <button id="seeMapBtn" class="ne-btn">Voir sur la carte</button>
+        </div>
+    </section>
+
+    <div class="controls">
+        <label for="mode">Mode de déplacement :</label>
+        <select id="mode">
+            <option value="foot">À pied</option>
+            <option value="bike">À vélo</option>
+        </select>
+        <button id="findRoute" class="ne-btn secondary">Afficher l'itinéraire</button>
+        <button id="clearRoute" class="ne-btn ghost">Réinitialiser</button>
+        <p style="font-size:12px;color:var(--ne-muted);margin-top:6px;">
+            Clique sur au moins deux points de patrimoine (cercles) sur la carte pour composer ton itinéraire.
+            <br><strong id="selectionCount">Aucun point sélectionné</strong>
+        </p>
+    </div>
+
+    <div id="mapWrapper"><div id="map"></div></div>
+
+    <footer class="ne-footer">
+        <p>&copy; Crédit Normandie Patrimoine | Géo Tech Groupe 2024</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/map-common.js"></script>
+    <script>
+        const map = neCreateMap('map');
+        neAddDepartmentContours(map);
+        neAddLocateControl(map);
+
+        // ---- Sélection de points + itinéraire à pied / vélo ----
+        let selectedPoints = [];
+        let routeLayer = null;
+        const selectionMarkers = [];
+
+        function markAsSelected(latlng) {
+            selectedPoints.push(latlng);
+            const dot = L.circleMarker(latlng, {
+                radius: 9, color: '#fff', weight: 2, fillColor: '#0077b6', fillOpacity: 1
+            }).addTo(map);
+            selectionMarkers.push(dot);
+            updateSelectionCount();
+        }
+
+        function updateSelectionCount() {
+            document.getElementById('selectionCount').textContent =
+                selectedPoints.length === 0 ? 'Aucun point sélectionné'
+                : `${selectedPoints.length} point(s) sélectionné(s)`;
+        }
+
+        // ---- Couches Mobilier / Architecture à la demande ----
+        // Chaque marqueur cliqué s'ajoute à l'itinéraire (en plus d'ouvrir sa popup).
+        const clusterGroups = { Mobilier: null, Architecture: null };
+        async function ensureLayer(type) {
+            if (!clusterGroups[type]) {
+                clusterGroups[type] = await neLoadPatrimoineLayer(type, (latlng) => markAsSelected(latlng));
+            }
+            if (!map.hasLayer(clusterGroups[type])) map.addLayer(clusterGroups[type]);
+        }
+        ensureLayer('Mobilier');
+        ensureLayer('Architecture');
+
+        // ---- Carte "Activité éco-responsable" (Parcours_Normadie.geojson) ----
+        let parcoursData = null;
+        async function loadParcoursData() {
+            if (!parcoursData) {
+                const res = await fetch(CONFIG.geo.parcours);
+                parcoursData = await res.json();
+            }
+            return parcoursData;
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        document.getElementById('seeMapBtn').addEventListener('click', async () => {
+            const ville = document.getElementById('villeSelect').value;
+            if (!ville) { alert('Choisis une ville.'); return; }
+
+            const data = await loadParcoursData();
+            const sites = data.features.filter(f => f.properties.Ville === ville);
+            if (!sites.length) {
+                document.getElementById('ecoDescription').textContent = `Aucun site enregistré pour ${ville} pour le moment.`;
+                return;
+            }
+
+            let totalDistance = 0;
+            for (let i = 0; i < sites.length - 1; i++) {
+                const [lon1, lat1] = sites[i].geometry.coordinates;
+                const [lon2, lat2] = sites[i + 1].geometry.coordinates;
+                totalDistance += haversine(lat1, lon1, lat2, lon2);
+            }
+            const cyclingMin = totalDistance ? Math.round((totalDistance / 15) * 60) : 0;
+            const ptMin = totalDistance ? Math.round((totalDistance / 30) * 60) : 0;
+
+            document.getElementById('ecoDescription').innerHTML =
+                `<strong>${sites.length} site(s)</strong> à découvrir à ${ville}. ` +
+                `Distance totale estimée : ${totalDistance.toFixed(1)} km — ` +
+                `≈ ${cyclingMin} min à vélo, ≈ ${ptMin} min en transport en commun.`;
+
+            selectedPoints = [];
+            selectionMarkers.forEach(m => map.removeLayer(m));
+            selectionMarkers.length = 0;
+            updateSelectionCount();
+            sites.forEach(feature => {
+                const [lon, lat] = feature.geometry.coordinates;
+                const icon = L.divIcon({
+                    html: `<div class="patrimoine-marker" style="background:#2e8b57">🌿</div>`,
+                    className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+                });
+                const marker = L.marker([lat, lon], { icon }).addTo(map)
+                    .bindPopup(`<div class="popup-title">${feature.properties['Nom du site']}</div>
+                                <div class="popup-description">${feature.properties.Descriptions || ''}</div>
+                                ${/^https?:\/\//.test(feature.properties.images || '') ? `<img src="${feature.properties.images}" loading="lazy" onerror="this.remove()">` : ''}`);
+                marker.on('click', () => markAsSelected(marker.getLatLng()));
+            });
+
+            const bounds = L.latLngBounds(sites.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]));
+            map.fitBounds(bounds, { padding: [40, 40] });
+        });
+
+        // ---- Itinéraire pied / vélo (GraphHopper) ----
+        function clearRoutes() {
+            if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+        }
+
+        async function fetchMultiPointRoute(profile) {
+            if (selectedPoints.length < 2) {
+                alert('Sélectionne au moins deux points sur la carte (clique sur les marqueurs).');
+                return;
+            }
+            const pointsQuery = selectedPoints.map(p => `${p.lat},${p.lng}`).join('&point=');
+            const url = `${CONFIG.graphhopper.routeUrl}?point=${pointsQuery}&profile=${profile}&locale=fr&key=${CONFIG.graphhopper.key}&points_encoded=false`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.paths && data.paths.length) {
+                    const coords = data.paths[0].points.coordinates.map(c => [c[1], c[0]]);
+                    clearRoutes();
+                    routeLayer = L.polyline(coords, { color: profile === 'bike' ? '#2e8b57' : '#e8590c', weight: 4 }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds());
+                } else {
+                    alert('Aucun itinéraire trouvé.');
+                }
+            } catch (err) {
+                console.error('Erreur itinéraire :', err);
+                alert("Erreur lors du calcul de l'itinéraire.");
+            }
+        }
+
+        document.getElementById('findRoute').addEventListener('click', () => {
+            fetchMultiPointRoute(document.getElementById('mode').value);
+        });
+
+        document.getElementById('clearRoute').addEventListener('click', () => {
+            clearRoutes();
+            selectedPoints = [];
+            selectionMarkers.forEach(m => map.removeLayer(m));
+            selectionMarkers.length = 0;
+            updateSelectionCount();
+        });
+    </script>
+</body>
+
+</html>
