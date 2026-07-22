@@ -189,7 +189,8 @@ img { max-width: 100%; display: block; }
 
 .patrimoine-marker:hover { transform: scale(1.12); z-index: 1000; }
 
-/* Clusters : dégradé sobre + halo, sans photos (garde les perfs) */
+/* Clusters : couleur pleine + reflet en dégradé classique (aucune fonction CSS récente,
+   pour un rendu garanti sur tous les navigateurs). */
 .cluster-marker {
   border-radius: 50%;
   display: flex;
@@ -199,7 +200,8 @@ img { max-width: 100%; display: block; }
   font-weight: 700;
   font-size: 13px;
   font-family: var(--ne-font);
-  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--cluster-color) 70%, white), var(--cluster-color));
+  background-color: var(--cluster-color, #555);
+  background-image: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 65%);
   border: 2px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.25);
   transition: transform 0.15s ease;
