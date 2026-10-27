@@ -121,10 +121,3 @@ version précédente :
       un service de type Google Sheets / Airtable).
 - [ ] Ajouter une pagination ou un chargement progressif sur `filtre.html` pour de très gros volumes.
 - [ ] Explorer un mode hors-ligne (Service Worker) pour les zones à faible connectivité.
-
-## Licence
-
-Les données de patrimoine proviennent de l'inventaire général du patrimoine culturel de la
-région Normandie (open data). Le code de ce dépôt peut être réutilisé librement à des fins
-pédagogiques ; vérifie les conditions d'usage des services tiers (MapTiler, GraphHopper,
-OpenRouteService, Jawg) avant tout usage en production.
